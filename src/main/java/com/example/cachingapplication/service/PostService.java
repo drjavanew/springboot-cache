@@ -16,7 +16,7 @@ public class PostService {
         return new Post(postId, "Demo post");
     }
 
-    @CachePut("posts")
+    @CacheEvict(value = "posts", key = "#id")
     public void updatePost(Post post) {
         // update post
     }

@@ -7,6 +7,7 @@ import org.ehcache.config.units.MemoryUnit;
 import org.ehcache.core.config.DefaultConfiguration;
 import org.ehcache.expiry.ExpiryPolicy;
 import org.ehcache.jsr107.EhcacheCachingProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.jcache.JCacheCacheManager;
@@ -21,28 +22,52 @@ import java.util.Map;
 @Configuration
 @EnableCaching
 public class CacheConfig {
+    @Value("${cache.name}")
+    private String cacheName;
 
-    private static final String MY_CACHE = "posts";
+    @Value("${cache.heap.size}")
+    private int heapSize;
+
+    @Value("${cache.offheap.size}")
+    private int offheapSize;
+
+    @Value("${cache.offheap.unit}")
+    private String offheapUnit;
+
+    @Value("${cache.expiry.ttl.minutes}")
+    private int ttlMinutes;
+
+    @Value("${cache.expiry.idle.minutes}")
+    private int idleMinutes;
 
     @Bean
     public CacheManager jCacheCacheManager() {
         Map<String, CacheConfiguration<?, ?>> cacheMap = new HashMap<>();
 
         ResourcePoolsBuilder resourcePoolsBuilder = ResourcePoolsBuilder
-                .heap(5)
-                .offheap(1, MemoryUnit.MB); //min value is 1MB
+                .heap(heapSize)
+                .offheap(offheapSize, MemoryUnit.valueOf(offheapUnit));
 
-        ExpiryPolicy<Object, Object> expiryPolicy = createExpiryPolicy(Duration.ofMinutes(1), Duration.ofMinutes(5));
+        ExpiryPolicy<Object, Object> expiryPolicy = createExpiryPolicy(
+                Duration.ofMinutes(ttlMinutes),
+                Duration.ofMinutes(idleMinutes)
+        );
 
         CacheConfiguration<Object, Object> cacheConfiguration = CacheConfigurationBuilder
                 .newCacheConfigurationBuilder(Object.class, Object.class, resourcePoolsBuilder)
                 .withExpiry(expiryPolicy)
                 .build();
 
-        cacheMap.put(MY_CACHE, cacheConfiguration);
-        EhcacheCachingProvider ehcacheCachingProvider = (EhcacheCachingProvider) Caching.getCachingProvider(EhcacheCachingProvider.class.getName());
-        DefaultConfiguration defaultConfiguration = new DefaultConfiguration(cacheMap, ehcacheCachingProvider.getDefaultClassLoader());
-        javax.cache.CacheManager cacheManager = ehcacheCachingProvider.getCacheManager(ehcacheCachingProvider.getDefaultURI(), defaultConfiguration);
+        cacheMap.put(cacheName, cacheConfiguration);
+        EhcacheCachingProvider ehcacheCachingProvider =
+                (EhcacheCachingProvider) Caching.getCachingProvider(EhcacheCachingProvider.class.getName());
+
+        DefaultConfiguration defaultConfiguration =
+                new DefaultConfiguration(cacheMap, ehcacheCachingProvider.getDefaultClassLoader());
+
+        javax.cache.CacheManager cacheManager =
+                ehcacheCachingProvider.getCacheManager(ehcacheCachingProvider.getDefaultURI(), defaultConfiguration);
+
         return new JCacheCacheManager(cacheManager);
     }
 
@@ -53,5 +78,4 @@ public class CacheConfig {
                 .access(timeToIdle)
                 .build();
     }
-
 }
