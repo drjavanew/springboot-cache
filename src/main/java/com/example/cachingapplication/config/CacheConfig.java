@@ -29,8 +29,8 @@ public class CacheConfig {
         Map<String, CacheConfiguration<?, ?>> cacheMap = new HashMap<>();
 
         ResourcePoolsBuilder resourcePoolsBuilder = ResourcePoolsBuilder
-                .heap(5)
-                .offheap(1, MemoryUnit.MB); //min value is 1MB
+                .heap(50)
+                .offheap(10, MemoryUnit.MB); //min value is 1MB
 
         ExpiryPolicy<Object, Object> expiryPolicy = createExpiryPolicy(Duration.ofMinutes(1), Duration.ofMinutes(5));
 

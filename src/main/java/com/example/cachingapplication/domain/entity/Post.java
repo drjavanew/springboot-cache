@@ -19,4 +19,20 @@ public class Post implements Serializable {
     public String toString(){
         return "Posting";
     }
+
+    public String getTitle(){
+        return title;
+    }
+
+    public void setTitle(String title){
+        this.title = title;
+    }
+
+    public Integer getPostId(){
+        return postId;
+    }
+
+    public void setPostId(Integer postId) {
+        this.postId = postId;
+    }
 }
